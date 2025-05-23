@@ -73,7 +73,7 @@ class Product:
             amount (int): The quantity to purchase.
 
         Returns:
-            str: Confirmation message including total price.
+            str: Confirmation message.
 
         Raises:
             ValueError: If amount is greater than available quantity.
@@ -82,15 +82,15 @@ class Product:
             raise ValueError(f"Not enough {self.name} in stock.")
 
         if self._promotion:
-            total_price = self._promotion.apply_promotion(self, amount)
+            _ = self._promotion.apply_promotion(self, amount)  # Preis wird berechnet, aber nicht zurückgegeben
         else:
-            total_price = self.price * amount
+            _ = self.price * amount
 
         self.quantity -= amount
         if self.quantity == 0:
             self.active = False
 
-        return f"Purchased {amount} of {self.name} for ${total_price:.2f}"
+        return f"Purchased {amount} of {self.name}"
 
 
 class NonStockedProduct(Product):
@@ -133,10 +133,10 @@ class NonStockedProduct(Product):
             str: Confirmation message.
         """
         if self._promotion:
-            total_price = self._promotion.apply_promotion(self, amount)
+            _ = self._promotion.apply_promotion(self, amount)
         else:
-            total_price = self.price * amount
-        return f"Purchased {amount} of {self.name} (Non-stocked product) for ${total_price:.2f}"
+            _ = self.price * amount
+        return f"Purchased {amount} of {self.name} (Non-stocked product)"
 
 
 class LimitedProduct(Product):
@@ -193,12 +193,12 @@ class LimitedProduct(Product):
         if amount > self.maximum:
             raise ValueError(f"Cannot purchase more than {self.maximum} of {self.name} per order.")
         if self._promotion:
-            total_price = self._promotion.apply_promotion(self, amount)
+            _ = self._promotion.apply_promotion(self, amount)
         else:
-            total_price = self.price * amount
+            _ = self.price * amount
 
         self.quantity -= amount
         if self.quantity == 0:
             self.active = False
 
-        return f"Purchased {amount} of {self.name} for ${total_price:.2f}"
+        return f"Purchased {amount} of {self.name}"
