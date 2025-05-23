@@ -32,7 +32,7 @@ def show_total_amount(best_buy):
     all_products = best_buy.get_all_products()  # Changed variable name to avoid conflict
 
     # Pass the products list to the static method get_total_quantity
-    total_quantity = best_buy.get_total_quantity(all_products)
+    total_quantity = best_buy.get_total_quantity()
     print(f"\nTotal of {total_quantity} items in store")
 
 
