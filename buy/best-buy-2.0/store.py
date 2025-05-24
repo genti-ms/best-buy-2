@@ -62,10 +62,9 @@ class Store:
             float: The total cost of all purchased items.
 
         Raises:
-            ValueError: If a product does not have enough quantity in stock.
+            ValueError: If a product does not have enough quantity in stock or purchase invalid.
         """
         total_price = 0
         for product, quantity in shopping_list:
-            total_price += product.price * quantity
-            product.purchase(quantity)
+            total_price += product.purchase(quantity)
         return total_price

@@ -1,5 +1,6 @@
 import products
 import store
+import promotions
 
 def show_menu():
     """
@@ -16,6 +17,9 @@ def show_menu():
 def list_products(best_buy):
     """
     Lists all products in the store.
+
+    Args:
+        best_buy (Store): The store instance.
     """
     all_products = best_buy.get_all_products()
     print("------")
@@ -27,11 +31,10 @@ def list_products(best_buy):
 def show_total_amount(best_buy):
     """
     Displays the total quantity of all products in the store.
-    """
-    # Get all products from the store
-    all_products = best_buy.get_all_products()  # Changed variable name to avoid conflict
 
-    # Pass the products list to the static method get_total_quantity
+    Args:
+        best_buy (Store): The store instance.
+    """
     total_quantity = best_buy.get_total_quantity()
     print(f"\nTotal of {total_quantity} items in store")
 
@@ -39,6 +42,9 @@ def show_total_amount(best_buy):
 def make_order(best_buy):
     """
     Allows the user to make an order.
+
+    Args:
+        best_buy (Store): The store instance.
     """
     products_list = best_buy.get_all_products()
     print("------")
@@ -74,7 +80,7 @@ def make_order(best_buy):
     if shopping_list:
         try:
             total_price = best_buy.order(shopping_list)
-            print(f"\n********\nOrder made! Total payment: ${total_price}\n")
+            print(f"\n********\nOrder made! Total payment: ${total_price:.2f}\n")
         except ValueError as error:
             print(f"Error: {error}")
 
@@ -82,14 +88,27 @@ def make_order(best_buy):
 def start():
     """
     Starts the user interface for the store.
-    Displays the main menu and processes user input.
+    Sets up initial products, promotions and runs the main menu loop.
     """
-    # Sets up the initial product inventory
+    # Setup initial products with various types
     product_list = [
         products.Product("MacBook Air M2", price=1450, quantity=100),
         products.Product("Bose QuietComfort Earbuds", price=250, quantity=500),
-        products.Product("Google Pixel 7", price=500, quantity=250)
+        products.Product("Google Pixel 7", price=500, quantity=250),
+        products.NonStockedProduct("Windows License", price=125),
+        products.LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
     ]
+
+    # Create promotion instances
+    second_half_price = promotions.SecondHalfPrice("Second Half Price")
+    third_one_free = promotions.ThirdOneFree("Third One Free")
+    thirty_percent = promotions.PercentDiscount("30% off", percent=30)
+
+    # Assign promotions to products
+    product_list[0].set_promotion(second_half_price)
+    product_list[1].set_promotion(third_one_free)
+    product_list[3].set_promotion(thirty_percent)
+
     best_buy = store.Store(product_list)
 
     while True:

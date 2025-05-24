@@ -1,204 +1,191 @@
 class Product:
     """
-    Represents a general product in the store.
-
-    Attributes:
-        name (str): Name of the product.
-        price (float): Price of the product.
-        quantity (int): Quantity of the product in stock.
-        active (bool): Whether the product is active (available).
-        _promotion (Promotion or None): Current promotion applied to the product.
+    Represents a basic product in the store with price, quantity, and optional promotion.
     """
 
     def __init__(self, name, price, quantity):
         """
-        Initializes a new Product instance.
+        Initializes a product with name, price, and quantity.
 
         Args:
-            name (str): The product's name.
-            price (float): The product's price.
-            quantity (int): The available quantity in stock.
-
-        Raises:
-            ValueError: If name is empty or price or quantity is negative.
+            name (str): Name of the product.
+            price (float): Price per unit (must be non-negative).
+            quantity (int): Initial stock quantity (must be non-negative).
         """
-        if not name:
-            raise ValueError("Product name cannot be empty.")
-        if price < 0:
-            raise ValueError("Price cannot be negative.")
-        if quantity < 0:
-            raise ValueError("Quantity cannot be negative.")
-
+        if price < 0 or quantity < 0:
+            raise ValueError("Price and quantity must be non-negative.")
         self.name = name
         self.price = price
         self.quantity = quantity
         self.active = True
         self._promotion = None
 
+    def is_active(self):
+        """
+        Returns whether the product is active (available for purchase).
+
+        Returns:
+            bool: True if active, False otherwise.
+        """
+        return self.active
+
+    def activate(self):
+        """Marks the product as active."""
+        self.active = True
+
+    def deactivate(self):
+        """Marks the product as inactive."""
+        self.active = False
+
     def set_promotion(self, promotion):
         """
-        Assign a promotion to this product.
+        Sets a promotion for the product.
 
         Args:
-            promotion (Promotion or None): The promotion instance or None to remove promotion.
+            promotion (Promotion): A promotion object.
         """
         self._promotion = promotion
 
     def get_promotion(self):
         """
-        Get the current promotion assigned to this product.
+        Gets the promotion set on the product.
 
         Returns:
-            Promotion or None: The current promotion if set, else None.
+            Promotion or None: The promotion object or None if not set.
         """
         return self._promotion
 
     def show(self):
         """
-        Returns a string with product details, including promotion if set.
+        Returns a string representation of the product for display.
 
         Returns:
-            str: Details of the product with promotion info if available.
+            str: Product details.
         """
-        base_str = f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}"
-        if self._promotion:
-            base_str += f", Promotion: {self._promotion.name}"
-        return base_str
+        promo = f" [Promotion: {self._promotion.name}]" if self._promotion else ""
+        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}{promo}"
 
     def purchase(self, amount):
         """
-        Purchases a given amount of the product, applying promotion if set.
+        Purchases a given amount of the product, applying promotion if any.
 
         Args:
-            amount (int): The quantity to purchase.
+            amount (int): Quantity to purchase.
 
         Returns:
-            str: Confirmation message.
-
-        Raises:
-            ValueError: If amount is greater than available quantity.
+            float: Total price after promotion (if applicable).
         """
+        if not self.active:
+            raise ValueError(f"Product '{self.name}' is not active.")
         if amount > self.quantity:
-            raise ValueError(f"Not enough {self.name} in stock.")
+            raise ValueError(f"Not enough stock for '{self.name}'.")
 
         if self._promotion:
-            _ = self._promotion.apply_promotion(self, amount)  # Preis wird berechnet, aber nicht zurückgegeben
+            total_price = self._promotion.apply_promotion(self, amount)
         else:
-            _ = self.price * amount
+            total_price = self.price * amount
 
         self.quantity -= amount
         if self.quantity == 0:
-            self.active = False
+            self.deactivate()
 
-        return f"Purchased {amount} of {self.name}"
+        return total_price
 
 
 class NonStockedProduct(Product):
     """
-    Represents a non-stocked (digital or service) product.
-
-    Quantity is always zero and cannot be changed.
+    A product that is always available and not stock-limited (e.g., digital goods).
     """
 
     def __init__(self, name, price):
         """
-        Initializes a NonStockedProduct with quantity fixed to zero.
+        Initializes a non-stocked product.
 
         Args:
-            name (str): The product's name.
-            price (float): The product's price.
+            name (str): Product name.
+            price (float): Product price (must be non-negative).
         """
         super().__init__(name, price, quantity=0)
 
     def show(self):
         """
-        Returns product details indicating it is non-stocked.
+        Returns a string representation of the non-stocked product.
 
         Returns:
-            str: Details of the non-stocked product.
+            str: Product details.
         """
-        base_str = f"{self.name} (Non-stocked), Price: ${self.price}"
-        if self._promotion:
-            base_str += f", Promotion: {self._promotion.name}"
-        return base_str
+        promo = f" [Promotion: {self._promotion.name}]" if self._promotion else ""
+        return f"{self.name}, Price: {self.price}, (Non-stocked){promo}"
 
     def purchase(self, amount):
         """
-        Allows purchase of any amount (no stock to reduce).
+        Allows unlimited purchases of the product.
 
         Args:
-            amount (int): The quantity to purchase.
+            amount (int): Quantity to "purchase".
 
         Returns:
-            str: Confirmation message.
+            float: Total price after promotion (if any).
         """
+        if not self.active:
+            raise ValueError(f"Product '{self.name}' is not active.")
         if self._promotion:
-            _ = self._promotion.apply_promotion(self, amount)
-        else:
-            _ = self.price * amount
-        return f"Purchased {amount} of {self.name} (Non-stocked product)"
+            return self._promotion.apply_promotion(self, amount)
+        return self.price * amount
 
 
 class LimitedProduct(Product):
     """
-    Represents a product that can only be purchased up to a limited amount per order.
-
-    Attributes:
-        maximum (int): Maximum quantity allowed per order.
+    A product that limits the quantity per purchase.
     """
 
     def __init__(self, name, price, quantity, maximum):
         """
-        Initializes a LimitedProduct.
+        Initializes a limited product.
 
         Args:
-            name (str): The product's name.
-            price (float): The product's price.
-            quantity (int): Available quantity in stock.
-            maximum (int): Max quantity allowed per order.
-
-        Raises:
-            ValueError: If maximum is less than 1.
+            name (str): Product name.
+            price (float): Product price.
+            quantity (int): Available stock.
+            maximum (int): Max quantity per purchase.
         """
-        if maximum < 1:
-            raise ValueError("Maximum must be at least 1.")
         super().__init__(name, price, quantity)
         self.maximum = maximum
 
     def show(self):
         """
-        Returns product details indicating the purchase limit.
+        Returns a string representation of the limited product.
 
         Returns:
-            str: Details of the limited product.
+            str: Product details.
         """
-        base_str = f"{self.name} (Limited to {self.maximum} per order), Price: ${self.price}, Quantity: {self.quantity}"
-        if self._promotion:
-            base_str += f", Promotion: {self._promotion.name}"
-        return base_str
+        promo = f" [Promotion: {self._promotion.name}]" if self._promotion else ""
+        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}, Max per order: {self.maximum}{promo}"
 
     def purchase(self, amount):
         """
-        Purchases a given amount with check against the maximum allowed per order.
+        Purchases a quantity of the product within allowed maximum.
 
         Args:
-            amount (int): The quantity to purchase.
+            amount (int): Quantity to purchase.
 
         Returns:
-            str: Confirmation message.
-
-        Raises:
-            ValueError: If amount exceeds the maximum per order.
+            float: Total price after promotion (if applicable).
         """
+        if not self.active:
+            raise ValueError(f"Product '{self.name}' is not active.")
         if amount > self.maximum:
-            raise ValueError(f"Cannot purchase more than {self.maximum} of {self.name} per order.")
+            raise ValueError(f"Cannot purchase more than {self.maximum} of '{self.name}'.")
+        if amount > self.quantity:
+            raise ValueError(f"Not enough stock for '{self.name}'.")
+
         if self._promotion:
-            _ = self._promotion.apply_promotion(self, amount)
+            total_price = self._promotion.apply_promotion(self, amount)
         else:
-            _ = self.price * amount
+            total_price = self.price * amount
 
         self.quantity -= amount
         if self.quantity == 0:
-            self.active = False
+            self.deactivate()
 
-        return f"Purchased {amount} of {self.name}"
+        return total_price
